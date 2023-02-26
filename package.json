@@ -24,7 +24,7 @@
 		}
 	},
 	"dependencies": {
-		"vue-demi": "latest",
+		"vue-demi": "*",
 		"pinia": "^2.0.32"
 	}
 }
