@@ -5,7 +5,8 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"prepublish": "npm run build",
-		"build": "tsc -skipLibCheck"
+		"build": "tsc -skipLibCheck",
+		"localPublish": "npm run prepublish && cd dist && npm link"
 	},
 	"files": [
 		"/dist"
