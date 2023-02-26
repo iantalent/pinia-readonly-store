@@ -4,7 +4,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"prepublish": "npm run build",
+		"postinstall": "npm run build",
 		"build": "tsc -skipLibCheck",
 		"localPublish": "npm run prepublish && cd dist && npm link"
 	},
