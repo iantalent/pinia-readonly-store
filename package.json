@@ -1,0 +1,26 @@
+{
+	"name": "pinia-readonly-store",
+	"version": "1.0.0",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"prepublish": "npm run build",
+		"build": "tsc -skipLibCheck"
+	},
+	"files": [
+		"/dist"
+	],
+	"peerDependencies": {
+		"@vue/composition-api": "^1.4.0",
+		"vue": "^2.6.14 || ^3.2.0"
+	},
+	"peerDependenciesMeta": {
+		"@vue/composition-api": {
+			"optional": true
+		}
+	},
+	"dependencies": {
+		"vue-demi": "latest",
+		"pinia": "^2.0.32"
+	}
+}
