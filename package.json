@@ -13,13 +13,13 @@
 	],
 	"devDependencies": {
 		"typescript": "^4.4.4",
-		"vue": "^3.0.0",
 		"vue-demi": "latest",
-		"pinia": "^2.0.32"
+		"pinia": ">=2.0.32",
+		"vue": "^3.0.0"
 	},
 	"peerDependencies": {
-		"vue": "^2.6.14 || ^3.0.0",
-		"@vue/composition-api": "^1.4.0"
+		"vue": "^2.0.0 || ^3.0.0",
+		"@vue/composition-api": "^1.0.0-rc.1"
 	},
 	"peerDependenciesMeta": {
 		"@vue/composition-api": {
