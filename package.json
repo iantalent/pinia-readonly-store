@@ -4,7 +4,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"tsc": "npx tsc -skipLibCheck",
+		"tsc": "./node_modules/typescript/bin/tsc -skipLibCheck",
 		"postinstall": "npm run build",
 		"build": "npm run tsc",
 		"localPublish": "npm run prepublish && cd dist && npm link"
