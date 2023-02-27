@@ -5,6 +5,7 @@
 		"declaration": true,
 		"outDir": "./dist",
 		"noImplicitThis": true,
+		"skipLibCheck": true,
 		"strict": true
 	},
 	"include": [
