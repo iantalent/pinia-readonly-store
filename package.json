@@ -13,7 +13,6 @@
 		"/dist"
 	],
 	"devDependencies": {
-		"typescript": "^4.4.4",
 		"vue-demi": "latest",
 		"pinia": ">=2.0.32",
 		"vue": "^3.0.0"
@@ -27,5 +26,7 @@
 			"optional": true
 		}
 	},
-	"dependencies": {}
+	"dependencies": {
+		"typescript": "^4.4.4"
+	}
 }
