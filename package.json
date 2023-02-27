@@ -1,22 +1,20 @@
 {
 	"name": "pinia-readonly-store",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"tsc": "npx tsc",
+		"tsc": "tsc",
+		"tsc-version": "tsc --version",
 		"build": "npm run tsc",
-		"postinstall": "npm run build",
 		"localPublish": "npm run build && cd dist && npm link"
 	},
 	"files": [
 		"/dist"
 	],
 	"devDependencies": {
-		"@types/node": "^18.14.2",
-		"pinia": ">=2.0.32",
 		"vue": "^3.0.0",
-		"vue-demi": "latest"
+		"typescript": "^4.4.4"
 	},
 	"peerDependencies": {
 		"@vue/composition-api": "^1.0.0-rc.1",
@@ -28,6 +26,7 @@
 		}
 	},
 	"dependencies": {
-		"typescript": "^4.4.4"
+		"vue-demi": "latest",
+		"pinia": ">=2.0.32"
 	}
 }
