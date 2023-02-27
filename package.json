@@ -31,6 +31,6 @@
 	},
 	"dependencies": {
 		"vue-demi": "latest",
-		"pinia": ">=2.0.32"
+		"pinia": "^2.0.0"
 	}
 }
