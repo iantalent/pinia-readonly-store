@@ -4,15 +4,16 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"tsc": "./node_modules/typescript/bin/tsc",
-		"postinstall": "npm run build",
+		"tsc": "npx tsc",
 		"build": "npm run tsc",
+		"postinstall": "npm run build",
 		"localPublish": "npm run build && cd dist && npm link"
 	},
 	"files": [
 		"/dist"
 	],
 	"devDependencies": {
+		"typescript": "^4.4.4",
 		"vue-demi": "latest",
 		"pinia": ">=2.0.32",
 		"vue": "^3.0.0"
@@ -26,7 +27,5 @@
 			"optional": true
 		}
 	},
-	"dependencies": {
-		"typescript": "^4.4.4"
-	}
+	"dependencies": {}
 }
