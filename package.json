@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"type": "module",
 	"scripts": {
 		"tsc": "tsc",
 		"tsc-version": "tsc --version",
@@ -17,8 +18,8 @@
 		"/dist/**/*"
 	],
 	"devDependencies": {
-		"vue": "^3.0.0",
-		"typescript": "^4.4.4"
+		"typescript": "^4.4.4",
+		"vue": "^3.0.0"
 	},
 	"peerDependencies": {
 		"@vue/composition-api": "^1.0.0",
@@ -30,7 +31,7 @@
 		}
 	},
 	"dependencies": {
-		"vue-demi": "latest",
-		"pinia": "^2.0.0"
+		"pinia": "^2.0.0",
+		"vue-demi": "latest"
 	}
 }
