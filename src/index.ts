@@ -61,8 +61,6 @@ export function defineReadonlyStore<Id extends string,
 			reactiveState = reactive(initialState),
 			readOnlyState = prepareReadonlyState(reactiveState);
 		
-		//TODO allow actions edit reactive data. Maybe we should have context object for actions thisArg
-		
 		const actions = options.actions ? options.actions(reactiveState) : {},
 			computed = options.computed ? options.computed(reactiveState) : {}
 		
