@@ -1,4 +1,4 @@
-import {defineStore, skipHydrate} from "pinia";
+import {defineStore, skipHydrate, StoreDefinition} from "pinia";
 import {DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs} from "vue-demi";
 
 export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreState, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}>
@@ -52,8 +52,10 @@ export function defineReadonlyStore<Id extends string,
 	T extends ReadonlyStoreState,
 	C extends ReadonlyStoreGetterProp,
 	A extends ReadonlyStoreActionsProp,
+	CC extends ReadonlyStoreGetters<C>,
+	AA extends ReadonlyStoreActions<A>,
 	RT = DeepReadonly<T>>
-(options: ReadonlyStoreOptions<Id, T, C & ThisType<C & RT & A>, A & ThisType<A & RT & ReadonlyStoreGetters<C>>>)
+(options: ReadonlyStoreOptions<Id, T, C & ThisType<C & RT & A>, A & ThisType<A & RT & ReadonlyStoreGetters<C>>>): StoreDefinition<Id, RT & CC & AA>
 {
 	return defineStore(options.id, (): ReadonlyStore<T, C, A> =>
 	{
