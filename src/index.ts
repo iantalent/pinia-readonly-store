@@ -1,11 +1,4 @@
-import {
-	_ExtractActionsFromSetupStore,
-	_ExtractGettersFromSetupStore,
-	_ExtractStateFromSetupStore,
-	defineStore,
-	skipHydrate,
-	StoreDefinition
-} from "pinia";
+import {defineStore, skipHydrate} from "pinia";
 import {DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs} from "vue-demi";
 
 export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreStateProp, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}>
@@ -18,7 +11,7 @@ export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreS
 
 type ToRefsDeepReadOnly<T> = ToRefs<DeepReadonly<T>>
 
-export type ReadonlyStore<T extends ReadonlyStoreStateProp = any, C extends ReadonlyStoreGetterProp = any, A extends ReadonlyStoreActionsProp = any> =
+export type ReadonlyStore<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
 	ReadonlyStoreState<T> & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
 
 export type ReadonlyStoreStateProp = Record<string | number | symbol, any>;
@@ -59,13 +52,11 @@ function mergeStore<T extends ReadonlyStoreStateProp,
 
 export function defineReadonlyStore<Id extends string,
 	T extends ReadonlyStoreStateProp,
-	C extends ReadonlyStoreGetterProp,
-	A extends ReadonlyStoreActionsProp,
 	TT extends ReadonlyStoreState<T>,
-	CC extends ReadonlyStoreGetters<C>,
-	AA extends ReadonlyStoreActions<A>,
+	C extends ReadonlyStoreGetterProp = {},
+	A extends ReadonlyStoreActionsProp = {},
 	RS = ReadonlyStore<T, C, A>>
-(options: ReadonlyStoreOptions<Id, T, C & ThisType<C & TT & A>, A & ThisType<A & TT & ReadonlyStoreGetters<C>>>): StoreDefinition<Id, _ExtractStateFromSetupStore<RS>, _ExtractGettersFromSetupStore<RS> | any, _ExtractActionsFromSetupStore<RS>>
+(options: ReadonlyStoreOptions<Id, T, C & ThisType<C & TT & A>, A & ThisType<A & TT & ReadonlyStoreGetters<C>>>)
 {
 	return defineStore(options.id, (): RS =>
 	{
