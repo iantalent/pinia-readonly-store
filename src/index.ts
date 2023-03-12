@@ -30,6 +30,13 @@ export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp> = {
 
 export type ReadonlyStoreActionsProp = Record<any, ((...args: any[]) => void)>
 
+type StoreContext<T extends ReadonlyStoreStateProp,
+	CC extends ReadonlyStoreGetters<C>,
+	AA extends ReadonlyStoreActions<A>,
+	C extends ReadonlyStoreGetterProp = {},
+	A extends ReadonlyStoreActionsProp = {}> =
+	T & CC & AA;
+
 function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRefs<DeepReadonly<UnwrapNestedRefs<T>>>
 {
 	const readOnlyState = toRefs(readonly(state));
@@ -39,6 +46,15 @@ function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRef
 		readOnlyState[key] = skipHydrate(readOnlyState[key]);
 	
 	return readOnlyState;
+}
+
+function mergeContext<T extends ReadonlyStoreStateProp,
+	CC extends ReadonlyStoreGetters<C>,
+	AA extends ReadonlyStoreActions<A>,
+	C extends ReadonlyStoreGetterProp = {},
+	A extends ReadonlyStoreActionsProp = {}>(state: T, getters: C, actions: A): T & CC & AA
+{
+	return {...state, ...getters, ...actions};
 }
 
 function mergeStore<T extends ReadonlyStoreStateProp,
