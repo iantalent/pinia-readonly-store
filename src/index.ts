@@ -5,8 +5,8 @@ export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreS
 {
 	id: I
 	state: () => T
-	getters?: (state: T) => C
-	actions?: (state: T) => A
+	getters?: (state: T) => C // TODO make state independent. just play object of getters
+	actions?: (state: T) => A // TODO make state independent. just play object of actions
 }
 
 type ToRefsDeepReadOnly<T> = ToRefs<DeepReadonly<T>>
@@ -48,22 +48,24 @@ function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRef
 	return readOnlyState;
 }
 
-function mergeContext<T extends ReadonlyStoreStateProp,
-	CC extends ReadonlyStoreGetters<C>,
-	AA extends ReadonlyStoreActions<A>,
-	C extends ReadonlyStoreGetterProp = {},
-	A extends ReadonlyStoreActionsProp = {}>(state: T, getters: C, actions: A): T & CC & AA
-{
-	return {...state, ...getters, ...actions};
-}
-
-function mergeStore<T extends ReadonlyStoreStateProp,
+function createStoreContext<T extends ReadonlyStoreStateProp,
 	C extends ReadonlyStoreGetters<CP>,
-	CP extends ReadonlyStoreGetterProp,
 	A extends ReadonlyStoreActions<AP>,
-	AP extends ReadonlyStoreActionsProp>(state: ToRefsDeepReadOnly<T>, getters: C, actions: A): T & C & A
+	CP extends ReadonlyStoreGetterProp = {},
+	AP extends ReadonlyStoreActionsProp = {}>(reactiveState: UnwrapNestedRefs<T>, getters: C, actions: A): T & C & A
 {
-	return {...state, ...getters, ...actions};
+	const readonlyState = prepareReadonlyState(reactiveState),
+		readyReadonlyStore = {...readonlyState, ...getters},
+		actionContext : T & C & A = {...reactiveState, ...getters};
+	
+	let k: keyof A, bindAction;
+	for(k in actions)
+	{
+		bindAction = actions[k].bind(actionContext);
+		readyReadonlyStore[k] = actionContext[k] = bindAction
+	}
+	
+	return readyReadonlyStore;
 }
 
 export function defineReadonlyStore<Id extends string,
@@ -76,13 +78,12 @@ export function defineReadonlyStore<Id extends string,
 {
 	return defineStore(options.id, (): RS =>
 	{
-		const initialState = options.state() || {},
-			reactiveState = reactive(initialState),
-			readOnlyState = prepareReadonlyState(reactiveState);
+		const reactiveState = reactive(options.state() || {});
 		
-		const actions = options.actions ? options.actions(reactiveState) : {},
-			getters = options.getters ? options.getters(reactiveState) : {}
-		
-		return mergeStore(readOnlyState, getters, actions);
+		return createStoreContext(
+			reactiveState,
+			options.actions ? options.actions(reactiveState) : {},
+			options.getters ? options.getters(reactiveState) : {}
+		);
 	});
 }
