@@ -1,6 +1,6 @@
 import {defineStore, skipHydrate} from "pinia";
 import {DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs} from "vue-demi";
-import {ref} from "vue";
+import {computed, ComputedRef, ref, UnwrapRef} from "vue";
 
 export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreStateProp, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}>
 {
@@ -20,7 +20,7 @@ export type ReadonlyStoreStateProp = Record<string | number | symbol, any>;
 export type ReadonlyStoreState<T extends ReadonlyStoreStateProp> = ToRefsDeepReadOnly<T>;
 
 export type ReadonlyStoreGetters<C extends ReadonlyStoreGetterProp> = {
-	[K in keyof C]: ReturnType<C[K]>
+	[K in keyof C]: ComputedRef<C[K]>
 }
 
 export type ReadonlyStoreGetterProp = Record<any, (() => any)>
@@ -42,42 +42,52 @@ function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRef
 	return readOnlyState;
 }
 
-function createStoreContext<T extends ReadonlyStoreStateProp,
-	C extends ReadonlyStoreGetters<CP>,
-	A extends ReadonlyStoreActions<AP>,
-	R = ReadonlyStoreState<T> & C & A,
-	CP extends ReadonlyStoreGetterProp = {},
-	AP extends ReadonlyStoreActionsProp = {}>(reactiveState: T, getters: C, actions: A): R
+function makeComputed<C extends ReadonlyStoreGetters<CP>, CP extends ReadonlyStoreGetterProp = {}>(computedProp: CP): C
 {
-	const readonlyState = prepareReadonlyState(reactiveState),
-		readyReadonlyStore = {...readonlyState, ...getters},
-		actionContext = {...toRefs((reactiveState)), ...getters, ...actions};
-	
-	let k: keyof A;
-	for(k in actions)
+	const computedContext: any = {};
+	for(let key in computedProp)
 	{
-		readyReadonlyStore[k] = actionContext[k].bind(actionContext);
+		computedContext[key] = computed(computedProp[key]);
 	}
 	
-	return readyReadonlyStore;
+	return computedContext as C;
+}
+
+function mergeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
+	C extends ReadonlyStoreGetters<CP>,
+	A extends ReadonlyStoreActions<AP>,
+	T extends ReadonlyStoreStateProp = {},
+	CP extends ReadonlyStoreGetterProp = {},
+	AP extends ReadonlyStoreActionsProp = {}>(state: TT, getters: C, actions: A): T & C & A
+{
+	const store = {...state, ...getters, ...actions};
+	for(let k in getters)
+	{
+		store[k] = computed(function()
+		{
+			return getters[k].apply(store, arguments);
+		});
+	}
+	return store;
 }
 
 export function defineReadonlyStore<Id extends string,
-	T extends ReadonlyStoreStateProp,
 	TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
+	T extends ReadonlyStoreStateProp = {},
 	C extends ReadonlyStoreGetterProp = {},
 	A extends ReadonlyStoreActionsProp = {},
 	RS = ReadonlyStore<T, C, A>>
-(options: ReadonlyStoreOptions<Id, T, C & ThisType<C & TT & A>, A & ThisType<A & T & ReadonlyStoreGetters<C>>>)
+(options: ReadonlyStoreOptions<Id, T, C & ThisType<C & TT & A>, A & ThisType<A & TT & ReadonlyStoreGetters<C>>>)
 {
 	return defineStore(options.id, (): RS =>
 	{
-		const reactiveState = reactive(options.state() || {});
-		console.log('reactive', reactiveState);
-		return createStoreContext(
-			reactiveState,
-			options.getters ? options.getters(reactiveState) : {},
-			options.actions ? options.actions(reactiveState) : {}
-		);
+		const initialState = options.state() || {},
+			reactiveState = reactive(initialState),
+			readOnlyState = prepareReadonlyState(reactiveState);
+		
+		const actions = options.actions ? options.actions(reactiveState) : {},
+			getters = options.getters ? options.getters(reactiveState) : {}
+		
+		return mergeStore(readOnlyState, getters, actions);
 	});
 }
