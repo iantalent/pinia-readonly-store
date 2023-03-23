@@ -42,12 +42,15 @@ function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRef
 	return readOnlyState;
 }
 
-function makeComputed<C extends ReadonlyStoreGetters<CP>, CP extends ReadonlyStoreGetterProp = {}>(computedProp: CP): C
+function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP): ReadonlyStoreGetters<CP>
 {
-	const computedContext: any = {};
-	for(let key in computedProp)
+	const computedContext = <ReadonlyStoreGetters<CP>>{};
+	for(let key in computedProps)
 	{
-		computedContext[key] = computed(computedProp[key]);
+		if(!computedProps.hasOwnProperty(key))
+			continue;
+		
+		computedContext[key] = computed(computedProps[key]);
 	}
 	return computedContext;
 }
