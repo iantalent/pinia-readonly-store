@@ -55,17 +55,17 @@ function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP): Re
 	return computedContext;
 }
 
-function mergeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
+function makeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
 	C extends ReadonlyStoreGetters<CP>,
 	A extends ReadonlyStoreActions<AP>,
 	T extends ReadonlyStoreStateProp = {},
 	CP extends ReadonlyStoreGetterProp = {},
-	AP extends ReadonlyStoreActionsProp = {}>(state: TT, getters: CP, actions: A): TT & C & A
+	AP extends ReadonlyStoreActionsProp = {}>(readonlyState: TT, reactiveState: T, getters: CP, actions: A): TT & C & A
 {
-	const store = {...state, ...getters, ...actions};
+	const store = {...readonlyState, ...getters, ...actions};
 	const readyComputed = makeComputed(getters);
 	
-	return {...state, ...readyComputed, ...actions};
+	return {...readonlyState, ...readyComputed, ...actions};
 }
 
 export function defineReadonlyStore<Id extends string,
@@ -85,6 +85,6 @@ export function defineReadonlyStore<Id extends string,
 		const actions = options.actions ? options.actions(reactiveState) : {},
 			getters = options.getters ? options.getters(reactiveState) : {}
 		
-		return mergeStore(readOnlyState, getters, actions);
+		return makeStore(readOnlyState, reactiveState, getters, actions);
 	});
 }
