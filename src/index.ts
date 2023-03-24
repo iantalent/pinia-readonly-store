@@ -19,11 +19,13 @@ export type ReadonlyStoreStateProp = Record<string | number | symbol, any>;
 
 export type ReadonlyStoreState<T extends ReadonlyStoreStateProp> = ToRefsDeepReadOnly<T>;
 
-export type ReadonlyStoreGetters<C extends ReadonlyStoreGetterProp> = {
-	[K in keyof C]: ComputedRef<C[K]>
+export type ReadonlyStoreGetterProp = Record<any, (() => any)>;
+
+export type ReadonlyStoreGettersRefs<CP extends ReadonlyStoreStateProp> = {
+	[K in keyof CP]: ComputedRef<CP[K]>
 }
 
-export type ReadonlyStoreGetterProp = Record<any, (() => any)>
+export type ReadonlyStoreGetters<CP extends ReadonlyStoreStateProp> = UnwrapNestedRefs<ReadonlyStoreGettersRefs<CP>>;
 
 export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp> = {
 	[K in keyof A]: A[K]
@@ -44,7 +46,7 @@ function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRef
 
 function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP): ReadonlyStoreGetters<CP>
 {
-	const computedContext = <ReadonlyStoreGetters<CP>>{};
+	const computedContext = <ReadonlyStoreGettersRefs<CP>>{};
 	for(let key in computedProps)
 	{
 		if(!computedProps.hasOwnProperty(key))
@@ -52,7 +54,7 @@ function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP): Re
 		
 		computedContext[key] = computed(computedProps[key]);
 	}
-	return computedContext;
+	return reactive(computedContext);
 }
 
 function makeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
