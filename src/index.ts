@@ -11,8 +11,8 @@ export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreS
 
 type ToRefsDeepReadOnly<T> = ToRefs<DeepReadonly<T>>
 
-export type ReadonlyStore<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}, X = ReadonlyStoreContext<T, C, A>> =
-	ReadonlyStoreState<T> & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A, X>;
+export type ReadonlyStore<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
+	ReadonlyStoreState<T> & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
 
 export type ReadonlyStoreContext<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
 	T & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
@@ -29,12 +29,8 @@ export type ReadonlyStoreGettersRefs<CP extends ReadonlyStoreStateProp> = {
 
 export type ReadonlyStoreGetters<CP extends ReadonlyStoreStateProp> = UnwrapNestedRefs<ReadonlyStoreGettersRefs<CP>>;
 
-export type ReadonlyStoreActionsOld<A extends ReadonlyStoreActionsProp> = {
+export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp> = {
 	[K in keyof A]: A[K]
-}
-
-export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp, X extends ReadonlyStoreContext<any, any, A>> = {
-	[K in keyof A]: (this: X, ...args: Parameters<A[K]>) => ReturnType<A[K]>
 }
 
 export type ReadonlyStoreActionsProp = Record<string | number | symbol, ((...args: any[]) => any)>
@@ -96,7 +92,7 @@ function makeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
 	const readyComputed = makeComputed(getters, context);
 	const readyActions = makeActions(actions, context);
 	
-	addToContext(context, readyComputed); // make it reactive
+	addToContext(context, reactive(readyComputed));
 	addToContext(context, readyActions);
 	
 	//return {...readonlyState, ...readyComputed, ...actions};
