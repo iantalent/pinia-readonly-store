@@ -1,6 +1,5 @@
 import {defineStore, skipHydrate} from "pinia";
-import {DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs} from "vue-demi";
-import {computed, ComputedRef, ref, UnwrapRef} from "vue";
+import {DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs, ComputedRef, computed} from "vue-demi";
 
 export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreStateProp, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}>
 {
@@ -15,11 +14,14 @@ type ToRefsDeepReadOnly<T> = ToRefs<DeepReadonly<T>>
 export type ReadonlyStore<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
 	ReadonlyStoreState<T> & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
 
+export type ReadonlyStoreContext<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
+	T & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
+
 export type ReadonlyStoreStateProp = Record<string | number | symbol, any>;
 
 export type ReadonlyStoreState<T extends ReadonlyStoreStateProp> = ToRefsDeepReadOnly<T>;
 
-export type ReadonlyStoreGetterProp = Record<any, (() => any)>;
+export type ReadonlyStoreGetterProp = Record<string | number | symbol, (() => any)>;
 
 export type ReadonlyStoreGettersRefs<CP extends ReadonlyStoreStateProp> = {
 	[K in keyof CP]: ComputedRef<CP[K]>
@@ -31,7 +33,7 @@ export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp> = {
 	[K in keyof A]: A[K]
 }
 
-export type ReadonlyStoreActionsProp = Record<any, ((...args: any[]) => void)>
+export type ReadonlyStoreActionsProp = Record<string | number | symbol, ((...args: any[]) => void)>
 
 function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRefs<DeepReadonly<UnwrapNestedRefs<T>>>
 {
@@ -44,7 +46,7 @@ function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRef
 	return readOnlyState;
 }
 
-function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP): ReadonlyStoreGetters<CP>
+function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP, context: ReadonlyStoreContext): ReadonlyStoreGetters<CP>
 {
 	const computedContext = <ReadonlyStoreGettersRefs<CP>>{};
 	for(let key in computedProps)
@@ -52,9 +54,17 @@ function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP): Re
 		if(!computedProps.hasOwnProperty(key))
 			continue;
 		
-		computedContext[key] = computed(computedProps[key]);
+		computedContext[key] = computed(computedProps[key].bind(context));
 	}
 	return reactive(computedContext);
+}
+
+function addToContext<CP extends ReadonlyStoreGetterProp = {},
+	AP extends ReadonlyStoreActionsProp = {}>
+(context: ReadonlyStoreContext<any, CP, AP>, member: ReadonlyStoreGetters<CP> | ReadonlyStoreActions<AP>)
+{
+	for(let k in member)
+		context[k] = member[k];
 }
 
 function makeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
@@ -65,7 +75,9 @@ function makeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
 	AP extends ReadonlyStoreActionsProp = {}>(readonlyState: TT, reactiveState: T, getters: CP, actions: A): TT & C & A
 {
 	const store = {...readonlyState, ...getters, ...actions};
-	const readyComputed = makeComputed(getters);
+	const context = <ReadonlyStoreContext<T, CP, AP>>{...readonlyState};
+	const readyComputed = makeComputed(getters, context);
+	addToContext(context, readyComputed);
 	
 	return {...readonlyState, ...readyComputed, ...actions};
 }
