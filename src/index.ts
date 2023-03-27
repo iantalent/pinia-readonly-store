@@ -11,8 +11,8 @@ export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreS
 
 type ToRefsDeepReadOnly<T> = ToRefs<DeepReadonly<T>>
 
-export type ReadonlyStore<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
-	ReadonlyStoreState<T> & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
+export type ReadonlyStore<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}, X = ReadonlyStoreContext<T, C, A>> =
+	ReadonlyStoreState<T> & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A, X>;
 
 export type ReadonlyStoreContext<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
 	T & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
@@ -29,11 +29,11 @@ export type ReadonlyStoreGettersRefs<CP extends ReadonlyStoreStateProp> = {
 
 export type ReadonlyStoreGetters<CP extends ReadonlyStoreStateProp> = UnwrapNestedRefs<ReadonlyStoreGettersRefs<CP>>;
 
-export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp> = {
+export type ReadonlyStoreActionsOld<A extends ReadonlyStoreActionsProp> = {
 	[K in keyof A]: A[K]
 }
 
-export type ReadonlyStoreActionsContext<A extends ReadonlyStoreActionsProp, X extends ReadonlyStoreContext<any, any, A>> = {
+export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp, X extends ReadonlyStoreContext<any, any, A>> = {
 	[K in keyof A]: (this: X, ...args: Parameters<A[K]>) => ReturnType<A[K]>
 }
 
@@ -50,7 +50,7 @@ function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRef
 	return readOnlyState;
 }
 
-function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP, context: ReadonlyStoreContext<any, CP, any>): ReadonlyStoreGetters<CP>
+function makeComputed<CP extends ReadonlyStoreGetterProp = {}>(computedProps: CP, context: ReadonlyStoreContext<any, CP, any>): ReadonlyStoreGettersRefs<CP>
 {
 	const readyComputed = <ReadonlyStoreGettersRefs<CP>>{};
 	for(let key in computedProps)
@@ -60,12 +60,12 @@ function makeComputed<CP extends ReadonlyStoreGetterProp>(computedProps: CP, con
 		
 		readyComputed[key] = computed(computedProps[key].bind(context));
 	}
-	return reactive(readyComputed);
+	return readyComputed;
 }
 
-function makeActions<AP extends ReadonlyStoreActionsProp, X = ReadonlyStoreContext<any, any, AP>>(actionsProps: AP, context: X): ReadonlyStoreActionsContext<AP, X>
+function makeActions<AP extends ReadonlyStoreActionsProp, X = ReadonlyStoreContext<any, any, AP>>(actionsProps: AP, context: X): ReadonlyStoreActions<AP, X>
 {
-	const readyActions = <ReadonlyStoreActionsContext<AP, X>>{};
+	const readyActions = <ReadonlyStoreActions<AP, X>>{};
 	for(let key in actionsProps)
 	{
 		if(!actionsProps.hasOwnProperty(key))
@@ -78,7 +78,7 @@ function makeActions<AP extends ReadonlyStoreActionsProp, X = ReadonlyStoreConte
 
 function addToContext<CP extends ReadonlyStoreGetterProp = {},
 	AP extends ReadonlyStoreActionsProp = {}>
-(context: ReadonlyStoreContext<any, CP, AP>, member: ReadonlyStoreGetters<CP> | ReadonlyStoreActions<AP>)
+(context: ReadonlyStoreContext<any, CP, AP>, member: ReadonlyStoreGetters<CP> | ReadonlyStoreActions<AP, ReadonlyStoreContext<any, CP, AP>>)
 {
 	for(let k in member)
 		context[k] = member[k];
@@ -86,17 +86,21 @@ function addToContext<CP extends ReadonlyStoreGetterProp = {},
 
 function makeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
 	C extends ReadonlyStoreGetters<CP>,
-	A extends ReadonlyStoreActions<AP>,
+	A extends ReadonlyStoreActions<AP, X>,
 	T extends ReadonlyStoreStateProp = {},
 	CP extends ReadonlyStoreGetterProp = {},
-	AP extends ReadonlyStoreActionsProp = {}>(readonlyState: TT, reactiveState: T, getters: CP, actions: A): TT & C & A
+	AP extends ReadonlyStoreActionsProp = {},
+	X = ReadonlyStoreContext<T, CP, AP>>(readonlyState: TT, reactiveState: T, getters: CP, actions: A): TT & ReadonlyStoreGettersRefs<CP>
 {
 	const context = <ReadonlyStoreContext<T, CP, AP>>{...readonlyState};
 	const readyComputed = makeComputed(getters, context);
+	const readyActions = makeActions(actions, context);
 	
-	addToContext(context, readyComputed);
+	addToContext(context, readyComputed); // make it reactive
+	addToContext(context, readyActions);
 	
-	return {...readonlyState, ...readyComputed, ...actions};
+	//return {...readonlyState, ...readyComputed, ...actions};
+	return {...readonlyState, ...readyComputed};
 }
 
 export function defineReadonlyStore<Id extends string,
