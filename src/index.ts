@@ -38,7 +38,7 @@ export type ReadonlyStoreActionsContext<A extends ReadonlyStoreActionsProp, X ex
 }
 
 const testContext = <ReadonlyStoreContext<{prop: string}, {}, {action: () => string}>>{};
-testContext.action().indexOf("123");
+testContext.action = (() => {return ""});
 
 export type ReadonlyStoreActionsProp = Record<string | number | symbol, ((...args: any[]) => any)>
 
@@ -85,7 +85,7 @@ function makeComputed<CP extends ReadonlyStoreGetterProp, XT extends ReadonlySto
 	return readyComputed;
 }
 
-function makeActions<AP extends ReadonlyStoreActionsProp, XT extends ReadonlyStoreActionsProp, XC extends ReadonlyStoreGetterProp, X = ReadonlyStoreContext<XT, XC, AP>>(actionsProps: AP, context: X): ReadonlyStoreActionsContext<AP, X>
+function makeActions<AP extends ReadonlyStoreActionsProp, XT extends ReadonlyStoreActionsProp, XC extends ReadonlyStoreGetterProp, X = ReadonlyStoreContext<XT, XC, AP>>(actionsProps: AP, context:  ReadonlyStoreContext<XT, XC, AP>): ReadonlyStoreActionsContext<AP, X>
 {
 	const readyActions = <ReadonlyStoreActionsContext<AP, X>>{};
 	for(let key in actionsProps)
@@ -93,7 +93,7 @@ function makeActions<AP extends ReadonlyStoreActionsProp, XT extends ReadonlySto
 		if(!actionsProps.hasOwnProperty(key))
 			continue;
 		
-		const bindAction = actionsProps[key].bind(context);
+		const bindAction = <AP[keyof AP]>(actionsProps[key].bind(context));
 		readyActions[key] = bindAction;
 		context[key] = bindAction;
 	}
