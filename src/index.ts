@@ -1,5 +1,5 @@
 import {defineStore, skipHydrate} from "pinia";
-import {DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs, ComputedRef, computed} from "vue-demi";
+import {computed, ComputedRef, DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs} from "vue-demi";
 
 export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreStateProp, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}>
 {
@@ -9,17 +9,15 @@ export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreS
 	actions?: (state: T) => A // TODO make state independent. just play object of actions
 }
 
-type ToRefsDeepReadOnly<T> = ToRefs<DeepReadonly<T>>
-
 export type ReadonlyStore<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
-	ReadonlyStoreState<T> & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
+	ReadonlyStoreState<T> & ReadonlyStoreGettersRefs<C> & ReadonlyStoreActionsContext<A, ReadonlyStoreContext<T, C, A>>;
 
 export type ReadonlyStoreContext<T extends ReadonlyStoreStateProp = {}, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> =
 	UnwrapNestedRefs<T> & ReadonlyStoreGetters<C> & ReadonlyStoreActions<A>;
 
 export type ReadonlyStoreStateProp = Record<string | number | symbol, any>;
 
-export type ReadonlyStoreState<T extends ReadonlyStoreStateProp> = ToRefsDeepReadOnly<T>;
+export type ReadonlyStoreState<T extends ReadonlyStoreStateProp = {}> =  ToRefs<DeepReadonly<UnwrapNestedRefs<T>>>;
 
 export type ReadonlyStoreGetterProp = Record<string | number | symbol, (() => any)>;
 
@@ -39,9 +37,14 @@ export type ReadonlyStoreActionsContext<A extends ReadonlyStoreActionsProp, X ex
 
 export type ReadonlyStoreActionsProp = Record<string | number | symbol, ((...args: any[]) => any)>
 
-function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: T): ToRefs<DeepReadonly<UnwrapNestedRefs<T>>>
+function makeReadonlyReactive<T extends ReadonlyStoreStateProp>(proxy: UnwrapNestedRefs<T>): DeepReadonly<UnwrapNestedRefs<T>>
 {
-	const readOnlyState = toRefs(readonly(state));
+	return readonly(proxy);
+}
+
+function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: UnwrapNestedRefs<T>): ReadonlyStoreState<T>
+{
+	const readOnlyState = <ReadonlyStoreState<T>>toRefs(makeReadonlyReactive(state));
 	let key: keyof typeof state;
 	
 	for(key in state)
@@ -92,15 +95,16 @@ function makeActions<AP extends ReadonlyStoreActionsProp, X = ReadonlyStoreConte
 	return readyActions;
 }
 
-function makeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
+function makeStore<TT extends UnwrapNestedRefs<TP>,
+	TR extends ReadonlyStoreState<TP>,
 	C extends ReadonlyStoreGetters<CP>,
 	A extends ReadonlyStoreActions<AP>,
-	T extends ReadonlyStoreStateProp = {},
+	TP extends ReadonlyStoreStateProp = {},
 	CP extends ReadonlyStoreGetterProp = {},
 	AP extends ReadonlyStoreActionsProp = {},
-	X = ReadonlyStoreContext<T, CP, AP>>(readonlyState: TT, reactiveState: T, getters: CP, actions: A): TT & ReadonlyStoreGettersRefs<CP> & ReadonlyStoreActionsContext<AP, ReadonlyStoreContext<T, CP, AP>>
+	X = ReadonlyStoreContext<TT, CP, AP>>(readonlyState: TR, reactiveState: TT, getters: CP, actions: AP): TR & ReadonlyStoreGettersRefs<CP> & ReadonlyStoreActionsContext<AP, X>
 {
-	const context = <ReadonlyStoreContext<T, CP, AP>>{...readonlyState};
+	const context = <ReadonlyStoreContext<TT, CP, AP>>{...readonlyState};
 	const readyComputed = makeComputed(getters, context);
 	const readyActions = makeActions(actions, context);
 	
@@ -108,14 +112,14 @@ function makeStore<TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
 }
 
 export function defineReadonlyStore<Id extends string,
-	TT extends UnwrapNestedRefs<ReadonlyStoreState<T>>,
+	TT extends ReadonlyStoreState<T>,
 	T extends ReadonlyStoreStateProp = {},
 	C extends ReadonlyStoreGetterProp = {},
 	A extends ReadonlyStoreActionsProp = {},
 	RS = ReadonlyStore<T, C, A>>
 (options: ReadonlyStoreOptions<Id, T, C & ThisType<C & TT & A>, A & ThisType<A & TT & ReadonlyStoreGetters<C>>>)
 {
-	return defineStore(options.id, (): RS =>
+	return defineStore(options.id, (): ReadonlyStore<T, C, A> =>
 	{
 		const initialState = options.state() || {},
 			reactiveState = reactive(initialState),
