@@ -115,8 +115,8 @@ function makeStore<TT extends ReadonlyStoreStateReactive<TP>,
 	X = ReadonlyStoreContext<TP, CP, AP>>(readonlyState: TR, reactiveState: TT, options: MakeStoreOptions<CP, AP>): TR & ReadonlyStoreGettersRefs<CP> & ReadonlyStoreActions<AP>
 {
 	const context = <ReadonlyStoreContext<TP, CP, AP>>{...readonlyState};
-	const readyComputed = makeComputed(getters, context);
-	const readyActions = makeActions(actions, context);
+	const readyComputed = options.computed ? makeComputed(options.computed, context) : {};
+	const readyActions = options.actions ? makeActions(options.actions, context) : {};
 	
 	return {...readonlyState, ...readyComputed, ...readyActions};
 }
