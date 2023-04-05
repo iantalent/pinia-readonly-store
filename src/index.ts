@@ -39,8 +39,6 @@ export type ReadonlyStoreActionsContext<A extends ReadonlyStoreActionsProp, X ex
 
 const testContext = <ReadonlyStoreContext<{ prop: string }, {}, { action: () => string }>>{};
 
-export type ReadonlyStoreActionsProp = Record<string | number | symbol, ((...args: any[]) => any)>
-
 function makeReadonlyReactive<T extends ReadonlyStoreStateProp>(proxy: ReadonlyStoreStateReactive<T>): DeepReadonly<UnwrapNestedRefs<T>>
 {
 	return readonly(proxy);
@@ -84,18 +82,19 @@ function makeComputed<CP extends ReadonlyStoreGetterProp, XT extends ReadonlySto
 	return readyComputed;
 }
 
-function makeActions<AP extends ReadonlyStoreActionsProp, X extends ReadonlyStoreContext<any, any, AP>>(actionsProps: AP, context: X): ReadonlyStoreActions<AP>
+function makeActions<AP extends ReadonlyStoreActionsProp>(actionsProps: AP, context: ReadonlyStoreContext<any, any, AP>): ReadonlyStoreActions<AP>
 {
 	const readyActions = <ReadonlyStoreActions<AP>>{};
-	const actionsKeys = <Array<keyof AP>>Object.keys(actionsProps);
-	
-	actionsKeys.forEach(key =>
+	let key: keyof AP;
+	for(key in actionsProps)
 	{
+		if(!actionsProps.hasOwnProperty(key))
+			continue;
+		
 		const bindAction = <AP[keyof AP]>actionsProps[key].bind(context);
-		readyActions[key] = bindAction;
+		actionsProps[key] = bindAction;
 		context[key] = bindAction;
-	})
-	
+	}
 	return readyActions;
 }
 
