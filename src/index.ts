@@ -105,8 +105,8 @@ type MakeStoreOptions<C = ReadonlyStoreGetterProp, A = ReadonlyStoreActionsProp>
 	actions?: A
 }
 
-type ExtractStoreGettersProp<T> = T extends MakeStoreOptions<infer C, any> ? C : never;
-type ExtractStoreActionsProp<T> = T extends MakeStoreOptions<any, infer A> ? A : never;
+type ExtractStoreGettersProp<T extends MakeStoreOptions> = T extends MakeStoreOptions<infer C, any> ? C : {};
+type ExtractStoreActionsProp<T extends MakeStoreOptions> = T extends MakeStoreOptions<any, infer A> ? A : {};
 
 function makeStore<TT extends ReadonlyStoreStateReactive<TP>,
 	TR extends ReadonlyStoreState<TP>,
