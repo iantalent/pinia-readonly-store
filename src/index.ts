@@ -29,6 +29,8 @@ export type ReadonlyStoreGettersRefs<CP extends ReadonlyStoreStateProp> = {
 
 export type ReadonlyStoreGetters<CP extends ReadonlyStoreStateProp> = UnwrapNestedRefs<ReadonlyStoreGettersRefs<CP>>;
 
+export type ReadonlyStoreActionsProp = Record<string | number | symbol, ((...args: any[]) => any)>
+
 export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp> = {
 	[K in keyof A]: A[K]
 }
