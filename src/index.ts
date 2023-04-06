@@ -35,10 +35,6 @@ export type ReadonlyStoreActions<A extends ReadonlyStoreActionsProp> = {
 	[K in keyof A]: A[K]
 }
 
-export type ReadonlyStoreActionsContext<A extends ReadonlyStoreActionsProp, X extends ReadonlyStoreContext<any, any, A>> = {
-	[K in keyof A]: (this: X, ...args: Parameters<A[K]>) => ReturnType<A[K]>
-}
-
 function makeReadonlyReactive<T extends ReadonlyStoreStateProp>(proxy: ReadonlyStoreStateReactive<T>): DeepReadonly<UnwrapNestedRefs<T>>
 {
 	return readonly(proxy);
@@ -66,7 +62,7 @@ function addComputedToContext<CP extends ReadonlyStoreGetterProp>(context: Reado
 	}
 }
 
-function makeComputed<CP extends ReadonlyStoreGetterProp, XT extends ReadonlyStoreStateProp, XA extends ReadonlyStoreActionsProp>(computedProps: CP, context: ReadonlyStoreContext<XT, CP, XA>): ReadonlyStoreGettersRefs<CP>
+function makeComputed<CP extends ReadonlyStoreGetterProp, XT extends ReadonlyStoreStateProp>(computedProps: CP, context: ReadonlyStoreContext<any, CP>): ReadonlyStoreGettersRefs<CP>
 {
 	const readyComputed = <ReadonlyStoreGettersRefs<CP>>{};
 	for(let key in computedProps)
@@ -98,27 +94,16 @@ function makeActions<AP extends ReadonlyStoreActionsProp>(actionsProps: AP, cont
 	return readyActions;
 }
 
-type MakeStoreOptions<C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> = {
-	computed?: C,
-	actions?: A
-}
-
-type ExtractStoreGettersProp<T extends MakeStoreOptions> = T extends MakeStoreOptions<infer C , any> ? C : never;
-type ExtractStoreActionsProp<T extends MakeStoreOptions> = T extends MakeStoreOptions<any, infer A> ? A : never;
-
 function makeStore<TT extends ReadonlyStoreStateReactive<TP>,
-	TR extends ReadonlyStoreState<TP>,
-	C extends ReadonlyStoreGetters<CP>,
-	A extends ReadonlyStoreActions<AP>,
-	O extends MakeStoreOptions,
-	CP extends ExtractStoreGettersProp<O>,
-	AP extends ExtractStoreActionsProp<O>,
+	RT extends ReadonlyStoreState<TP>,
+	CP extends ReadonlyStoreGetterProp,
+	AP extends ReadonlyStoreActionsProp,
 	TP extends ReadonlyStoreStateProp = {},
-	X = ReadonlyStoreContext<TP, CP, AP>>(readonlyState: TR, reactiveState: TT, options: O): TR & ReadonlyStoreGettersRefs<CP> & ReadonlyStoreActions<AP>
+	X = ReadonlyStoreContext<TP, CP, AP>>(readonlyState: RT, reactiveState: TT, getters: CP, actions: AP): RT & ReadonlyStoreGettersRefs<CP> & ReadonlyStoreActions<AP>
 {
 	const context = <ReadonlyStoreContext<TP, CP, AP>>{...readonlyState};
-	const readyComputed = options.computed ? makeComputed(options.computed, context) : {};
-	const readyActions = options.actions ? makeActions(options.actions, context) : {};
+	const readyComputed = makeComputed(getters, context);
+	const readyActions = makeActions(actions, context);
 	
 	return {...readonlyState, ...readyComputed, ...readyActions};
 }
@@ -127,8 +112,7 @@ export function defineReadonlyStore<Id extends string,
 	TT extends ReadonlyStoreState<T>,
 	T extends ReadonlyStoreStateProp = {},
 	C extends ReadonlyStoreGetterProp = {},
-	A extends ReadonlyStoreActionsProp = {},
-	RS = ReadonlyStore<T, C, A>>
+	A extends ReadonlyStoreActionsProp = {}>
 (options: ReadonlyStoreOptions<Id, T, C & ThisType<C & TT & A>, A & ThisType<A & TT & ReadonlyStoreGetters<C>>>)
 {
 	return defineStore(options.id, (): ReadonlyStore<T, C, A> =>
@@ -136,14 +120,9 @@ export function defineReadonlyStore<Id extends string,
 		const initialState = options.state() || {},
 			reactiveState = reactive(initialState),
 			readOnlyState = prepareReadonlyState(reactiveState),
-			makeOptions = <MakeStoreOptions<C, A>>{};
+			computed = options.getters ? options.getters(reactiveState) : <C>{},
+			actions = options.actions ? options.actions(reactiveState) : <A>{};
 		
-		if(options.getters)
-			makeOptions.computed = options.getters(reactiveState);
-		
-		if(options.actions)
-			makeOptions.actions = options.actions(reactiveState);
-		
-		return makeStore(readOnlyState, reactiveState, options);
+		return makeStore(readOnlyState, reactiveState, computed, actions);
 	});
 }
