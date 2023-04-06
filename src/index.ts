@@ -88,7 +88,7 @@ function makeActions<AP extends ReadonlyStoreActionsProp>(actionsProps: AP, cont
 			continue;
 		
 		const bindAction = <AP[keyof AP]>actionsProps[key].bind(context);
-		actionsProps[key] = bindAction;
+		readyActions[key] = bindAction;
 		context[key] = bindAction;
 	}
 	return readyActions;
