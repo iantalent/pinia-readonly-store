@@ -39,8 +39,6 @@ export type ReadonlyStoreActionsContext<A extends ReadonlyStoreActionsProp, X ex
 	[K in keyof A]: (this: X, ...args: Parameters<A[K]>) => ReturnType<A[K]>
 }
 
-const testContext = <ReadonlyStoreContext<{ prop: string }, {}, { action: () => string }>>{};
-
 function makeReadonlyReactive<T extends ReadonlyStoreStateProp>(proxy: ReadonlyStoreStateReactive<T>): DeepReadonly<UnwrapNestedRefs<T>>
 {
 	return readonly(proxy);
@@ -100,13 +98,13 @@ function makeActions<AP extends ReadonlyStoreActionsProp>(actionsProps: AP, cont
 	return readyActions;
 }
 
-type MakeStoreOptions<C = ReadonlyStoreGetterProp, A = ReadonlyStoreActionsProp> = {
+type MakeStoreOptions<C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}> = {
 	computed?: C,
 	actions?: A
 }
 
-type ExtractStoreGettersProp<T extends MakeStoreOptions> = T extends MakeStoreOptions<infer C, any> ? C : {};
-type ExtractStoreActionsProp<T extends MakeStoreOptions> = T extends MakeStoreOptions<any, infer A> ? A : {};
+type ExtractStoreGettersProp<T extends MakeStoreOptions> = T extends MakeStoreOptions<infer C , any> ? C : never;
+type ExtractStoreActionsProp<T extends MakeStoreOptions> = T extends MakeStoreOptions<any, infer A> ? A : never;
 
 function makeStore<TT extends ReadonlyStoreStateReactive<TP>,
 	TR extends ReadonlyStoreState<TP>,
