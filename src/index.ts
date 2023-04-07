@@ -102,6 +102,7 @@ function makeStore<TT extends ReadonlyStoreStateReactive<TP>,
 	TP extends ReadonlyStoreStateProp = {},
 	X = ReadonlyStoreContext<TP, CP, AP>>(readonlyState: RT, reactiveState: TT, getters: CP, actions: AP): RT & ReadonlyStoreGettersRefs<CP> & ReadonlyStoreActions<AP>
 {
+	//TODO whe should split Vue2 and Vue3 behavior. toRaw works only with Vue3. For vue 2 we should apply keys key by key
 	const context = <ReadonlyStoreContext<TP, CP, AP>>toRaw(reactiveState);
 	const readyComputed = makeComputed(getters, context);
 	const readyActions = makeActions(actions, context);
