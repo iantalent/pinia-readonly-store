@@ -1,5 +1,6 @@
 import {defineStore, skipHydrate} from "pinia";
 import {computed, ComputedRef, DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs} from "vue-demi";
+import {toRaw} from "vue";
 
 export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreStateProp, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}>
 {
@@ -101,7 +102,7 @@ function makeStore<TT extends ReadonlyStoreStateReactive<TP>,
 	TP extends ReadonlyStoreStateProp = {},
 	X = ReadonlyStoreContext<TP, CP, AP>>(readonlyState: RT, reactiveState: TT, getters: CP, actions: AP): RT & ReadonlyStoreGettersRefs<CP> & ReadonlyStoreActions<AP>
 {
-	const context = <ReadonlyStoreContext<TP, CP, AP>>reactive(reactiveState);
+	const context = <ReadonlyStoreContext<TP, CP, AP>>toRaw(reactiveState);
 	const readyComputed = makeComputed(getters, context);
 	const readyActions = makeActions(actions, context);
 	
