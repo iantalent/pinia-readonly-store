@@ -1,5 +1,15 @@
 import {defineStore, skipHydrate} from "pinia";
-import {computed, ComputedRef, DeepReadonly, reactive, readonly, ToRefs, toRefs, UnwrapNestedRefs} from "vue-demi";
+import {
+	computed,
+	ComputedRef,
+	DeepReadonly,
+	isVue2,
+	reactive,
+	readonly, set, toRef,
+	ToRefs,
+	toRefs,
+	UnwrapNestedRefs
+} from "vue-demi";
 
 export interface ReadonlyStoreOptions<I extends string, T extends ReadonlyStoreStateProp, C extends ReadonlyStoreGetterProp = {}, A extends ReadonlyStoreActionsProp = {}>
 {
@@ -53,11 +63,17 @@ function prepareReadonlyState<T extends ReadonlyStoreStateProp>(state: ReadonlyS
 
 function addComputedToContext<CP extends ReadonlyStoreGetterProp>(context: ReadonlyStoreContext<any, CP, any>, computed: ReadonlyStoreGettersRefs<CP>)
 {
-	const unwrappedComputed = reactive(computed);
+	//TODO should we really need wrap computed by reactive function? This works without it
+	const unwrappedComputed = isVue2 ? computed : reactive(computed);
 	
 	for(let key in unwrappedComputed)
 	{
-		if(unwrappedComputed.hasOwnProperty(key))
+		if(!unwrappedComputed.hasOwnProperty(key))
+			continue;
+		
+		if(isVue2)
+			set(context, key, toRef(unwrappedComputed, key));
+		else
 			context[key] = unwrappedComputed[key];
 	}
 }
