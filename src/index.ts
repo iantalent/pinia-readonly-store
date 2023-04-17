@@ -5,7 +5,8 @@ import {
 	DeepReadonly,
 	isVue2,
 	reactive,
-	readonly, set, toRef,
+	readonly,
+	set,
 	ToRefs,
 	toRefs,
 	UnwrapNestedRefs
@@ -72,7 +73,7 @@ function addComputedToContext<CP extends ReadonlyStoreGetterProp>(context: Reado
 			continue;
 		
 		if(isVue2)
-			set(context, key, toRef(unwrappedComputed, key));
+			set(context, key, unwrappedComputed[key]);
 		else
 			context[key] = unwrappedComputed[key];
 	}
